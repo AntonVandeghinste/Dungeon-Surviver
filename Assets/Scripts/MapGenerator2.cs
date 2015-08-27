@@ -202,7 +202,7 @@ public class MapGenerator2 : MonoBehaviour
 		foreach (Vector3 point in line) {
 
 			map[(int)point.x, (int)point.y, (int)point.z] = new Room(point);
-			map[(int)point.x, (int)point.y, (int)point.z].setType(Dungeon.Type.DEBUG);
+			//map[(int)point.x, (int)point.y, (int)point.z].setType(Dungeon.Type.DEBUG);
 			Room.MakeAccessBetween (map[(int)point.x, (int)point.y, (int)point.z], lastRoom);
 			addedRooms.Add (map[(int)point.x, (int)point.y, (int)point.z]);
 			Debug.Log (point.ToString ());
@@ -512,10 +512,6 @@ public class MapGenerator2 : MonoBehaviour
 							Vector3 pos = new Vector3 (((-width / 2f + x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + z) * roomSize * spacing) + roomSize * spacing / 2f);
 							if(map[x, y, z].TypeOf(Dungeon.Type.SPAWN))
 								Gizmos.color = Color.white;
-							else if(!map[x, y, z].TypeOf(Dungeon.Type.DEBUG))
-								Gizmos.color = new Color(1, 0, 0, .40f);
-							else
-								Gizmos.color = Color.gray;
 							Gizmos.DrawCube (pos, new Vector3 (roomSize, roomSize, roomSize));
 
 						}

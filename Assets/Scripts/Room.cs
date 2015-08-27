@@ -140,6 +140,7 @@ namespace Dungeon
 	{
 
 		public static readonly Type SPAWN = new Type ("Spawn");
+		public static readonly Type DEFAULT = new Type ("Default");
 		public static readonly Type ENEMY = new Type ("Enemy");
 		public static readonly Type PUZZLE = new Type ("Puzzle");
 		public static readonly Type DEBUG = new Type ("Debug");
