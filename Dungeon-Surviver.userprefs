@@ -2,8 +2,7 @@
   <MonoDevelop.Ide.Workspace />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\MapGenerator2.cs">
     <Files>
-      <File FileName="Assets\Scripts\MapGenerator2.cs" Line="514" Column="36" />
-      <File FileName="Assets\Scripts\Room.cs" Line="184" Column="1" />
+      <File FileName="Assets\Scripts\MapGenerator2.cs" Line="30" Column="56" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

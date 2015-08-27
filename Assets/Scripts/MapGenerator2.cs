@@ -10,7 +10,7 @@ public class MapGenerator2 : MonoBehaviour
 	public int roomSize = 1;
 	public int defaultWidth = 2, defaultHeight = 2, defaultDepth = 2;
 
-	int fillPercent = 12;
+	int fillPercent = 65;
 	int width, height, depth;//respectively x,z,y
 	string seed;
 	float spacing = 1.10f;
@@ -512,6 +512,8 @@ public class MapGenerator2 : MonoBehaviour
 							Vector3 pos = new Vector3 (((-width / 2f + x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + z) * roomSize * spacing) + roomSize * spacing / 2f);
 							if(map[x, y, z].TypeOf(Dungeon.Type.SPAWN))
 								Gizmos.color = Color.white;
+							else
+								Gizmos.color = Color.gray;
 							Gizmos.DrawCube (pos, new Vector3 (roomSize, roomSize, roomSize));
 
 						}
@@ -527,4 +529,3 @@ public class MapGenerator2 : MonoBehaviour
 	}
 	
 }
-
