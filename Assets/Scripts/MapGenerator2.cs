@@ -7,22 +7,13 @@ using Dungeon;
 public class MapGenerator2 : MonoBehaviour
 {
 
-	enum Flags {
-
-		Default,
-		Processed,
-		Done
-
-	};
-
 	public int roomSize = 1;
 	public int defaultWidth = 2, defaultHeight = 2, defaultDepth = 2;
 
-	int fillPercent = 65;
+	int fillPercent = 12;
 	int width, height, depth;//respectively x,z,y
 	string seed;
 	float spacing = 1.10f;
-	Flags[] flags = null;
 	List<Room> addedRooms = new List<Room> ();
 	bool updateRoomlist;
 
@@ -44,7 +35,6 @@ public class MapGenerator2 : MonoBehaviour
 	{
 
 		rooms.Clear ();//make sure we start with nothing
-		flags = null;
 
 		width = defaultWidth + (int)Mathf.Log (level, 2f);
 		height = defaultHeight + (int)Mathf.Log (level, 2f);
@@ -99,7 +89,7 @@ public class MapGenerator2 : MonoBehaviour
 
 	}
 
-	void MakeRoomsAccesible (bool forceAcces = false, Flags[] flags = null)
+	void MakeRoomsAccesible (bool forceAcces = false)
 	{
 
 		if (updateRoomlist) {
@@ -110,83 +100,83 @@ public class MapGenerator2 : MonoBehaviour
 
 		}
 
-		List<List<Room>> interConnectedRooms = GetInterConnectedRooms ();
-		if (this.flags == null)
-			this.flags = new Flags[interConnectedRooms.Count];
-		if (flags != null)
-			this.flags = flags;
+		List<Room> roomsListA = new List<Room> ();//not accessible from spawn
+		List<Room> roomsListB = new List<Room> ();//accessible from spawn
+
+		if (forceAcces) {
+
+			foreach (Room room in rooms) {
+
+				if (room.IsAccessibleFromSpawn ()) {
+
+					roomsListB.Add (room);
+
+				} else {
+
+					roomsListA.Add (room);
+
+				}
+
+			}
+
+		} else {
+
+			roomsListA = rooms;
+			roomsListB = rooms;
+
+		}
 
 		int bestDistance = 0;
 		Room bestRoomA = new Room ();
 		Room bestRoomB = new Room ();
 		bool possibleConnectionFound = false;
 
-		if (interConnectedRooms.Count > 1) {
+		foreach(Room roomA in roomsListA) {
 
-			foreach(List<Room> roomsA in interConnectedRooms) {
+			if(!forceAcces){
 
-				if(!forceAcces){
+				possibleConnectionFound = false;
 
-					possibleConnectionFound = false;
+				if(roomA.AccessibleRooms().Count > 0)
+					continue;
 
-					if(this.flags[interConnectedRooms.IndexOf (roomsA)] == Flags.Done)
-						continue;
+			}
 
-				}
+			foreach(Room roomB in roomsListB) {
 
-				foreach(List<Room> roomsB in interConnectedRooms) {
+				if(roomA == roomB || roomA.HasAccessTo(roomB))
+					continue;
 
-					if(roomsA == roomsB || (this.flags[interConnectedRooms.IndexOf(roomsA)] == Flags.Done && this.flags[interConnectedRooms.IndexOf(roomsB)] == Flags.Done))
-						continue;
+				int distanceBetweenRooms = (int) (Mathf.Pow (roomA.getPosition().x - roomB.getPosition().x, 2) + Mathf.Pow (roomA.getPosition().y - roomB.getPosition().y, 2) + Mathf.Pow (roomA.getPosition().z -roomB.getPosition().z, 2));
 
-					for(int a = 0; a < roomsA.Count; a++) {
+				if(distanceBetweenRooms < bestDistance || !possibleConnectionFound) {
 
-						for(int b = 0; b < roomsB.Count; b++) {
-
-							Room roomA = roomsA[a];
-							Room roomB = roomsB[b];
-
-							int distanceBetweenRooms = (int) (Mathf.Pow (roomA.getPosition().x - roomB.getPosition().x, 2) + Mathf.Pow (roomA.getPosition().y - roomB.getPosition().y, 2) + Mathf.Pow (roomA.getPosition().z -roomB.getPosition().z, 2));
-
-							if(distanceBetweenRooms < bestDistance || !possibleConnectionFound) {
-
-								bestDistance = distanceBetweenRooms;
-								possibleConnectionFound = true;
-								bestRoomA = roomA;
-								bestRoomB = roomB;
-
-							}
-
-						}
-
-					}
-
-				}
-
-				if(possibleConnectionFound && !forceAcces) {
-
-					AddRoomsToMakeAccessible (bestRoomA, bestRoomB);
-					this.flags[interConnectedRooms.IndexOf (roomsA)] = Flags.Processed;
-					this.flags[interConnectedRooms.IndexOf (interConnectedRooms.Find (item => item.Contains (bestRoomB)))] = Flags.Processed;
-
+					bestDistance = distanceBetweenRooms;
+					possibleConnectionFound = true;
+					bestRoomA = roomA;
+					bestRoomB = roomB;
 				}
 
 			}
 
-			if(possibleConnectionFound && forceAcces) {
+			if(possibleConnectionFound && !forceAcces) {
 
 				AddRoomsToMakeAccessible (bestRoomA, bestRoomB);
-				this.flags[interConnectedRooms.IndexOf (interConnectedRooms.Find (item => item.Contains (bestRoomA)))] = Flags.Done;
-				this.flags[interConnectedRooms.IndexOf (interConnectedRooms.Find (item => item.Contains (bestRoomB)))] = Flags.Done;
-				MakeRoomsAccesible(true, this.flags);
 
 			}
 
-			if(!forceAcces) {
+		}
 
-				MakeRoomsAccesible (true, this.flags);
+		if(possibleConnectionFound && forceAcces) {
 
-			}
+			AddRoomsToMakeAccessible (bestRoomA, bestRoomB);
+			MakeRoomsAccesible(true);
+
+		}
+
+		if(!forceAcces) {
+
+			MakeRoomsAccesible (true);
 
 		}
 
@@ -204,18 +194,23 @@ public class MapGenerator2 : MonoBehaviour
 
 	void AddRoomsToMakeAccessible(Room a, Room b) {
 
-		Debug.DrawLine (new Vector3 (((-width / 2f + a.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + a.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + a.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), new Vector3 (((-width / 2f + b.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + b.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + b.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), Color.green, 30);
+		Debug.DrawLine (new Vector3 (((-width / 2f + a.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + a.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + a.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), new Vector3 (((-width / 2f + b.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + b.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + b.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), Color.green, 120);
 
 		List<Vector3> line = GetLineByVoxelTraversal (a.getPosition (), b.getPosition ());
 
+		Room lastRoom = a;
 		foreach (Vector3 point in line) {
 
 			map[(int)point.x, (int)point.y, (int)point.z] = new Room(point);
 			map[(int)point.x, (int)point.y, (int)point.z].setType(Dungeon.Type.DEBUG);
+			Room.MakeAccessBetween (map[(int)point.x, (int)point.y, (int)point.z], lastRoom);
 			addedRooms.Add (map[(int)point.x, (int)point.y, (int)point.z]);
 			Debug.Log (point.ToString ());
+			lastRoom = map[(int)point.x, (int)point.y, (int)point.z];
 
 		}
+
+		Room.MakeAccessBetween (lastRoom, b);
 
 		updateRoomlist = true;
 
@@ -375,7 +370,7 @@ public class MapGenerator2 : MonoBehaviour
 
 		n = ax + ay + az;
 
-		while (--n > 0) {
+		while (--n >= 0) {
 
 			if(map[x, y, z] == null) {
 
@@ -419,7 +414,7 @@ public class MapGenerator2 : MonoBehaviour
 
 	}
 
-	List<List<Room>> GetInterConnectedRooms () {
+	/*List<List<Room>> GetInterConnectedRooms () {
 
 		List<List<Room>> interConnectedRooms = new List<List<Room>> ();
 		Flags[,,] mapFlags = new Flags[width, depth, height];
@@ -494,7 +489,7 @@ public class MapGenerator2 : MonoBehaviour
 
 		return roomsList;
 
-	}
+	}*/
 
 	bool IsInMapRange (int x, int y, int z) {
 								
@@ -515,7 +510,9 @@ public class MapGenerator2 : MonoBehaviour
 						if (map [x, y, z] != null) {
 
 							Vector3 pos = new Vector3 (((-width / 2f + x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + z) * roomSize * spacing) + roomSize * spacing / 2f);
-							if(!map[x, y, z].TypeOf(Dungeon.Type.DEBUG))
+							if(map[x, y, z].TypeOf(Dungeon.Type.SPAWN))
+								Gizmos.color = Color.white;
+							else if(!map[x, y, z].TypeOf(Dungeon.Type.DEBUG))
 								Gizmos.color = new Color(1, 0, 0, .40f);
 							else
 								Gizmos.color = Color.gray;

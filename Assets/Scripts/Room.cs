@@ -21,7 +21,8 @@ namespace Dungeon
 
 		Vector3 position;
 		List<Room> connectedRooms = new List<Room> ();
-		bool isAccesibleFromSpawn;
+		List<Room> accessibleRooms = new List<Room> ();
+		bool isAccesibleFromSpawn = false;
 		Type type;
 
 		public Room(){
@@ -63,14 +64,55 @@ namespace Dungeon
 			if (!isAccesibleFromSpawn) {
 				
 				isAccesibleFromSpawn = true;
-				foreach (Room connectedRoom in connectedRooms) {
+				foreach (Room accessibleRoom in accessibleRooms) {
 					
-					connectedRoom.SetAccesibleFromSpawn();
+					accessibleRoom.SetAccesibleFromSpawn();
 					
 				}
 				
 			}
 			
+		}
+
+		public List<Room> AccessibleRooms(){
+
+			return accessibleRooms;
+
+		}
+
+		public bool IsAccessibleFromSpawn(){
+
+			return isAccesibleFromSpawn;
+
+		}
+
+		public bool HasAccessTo(Room r){
+
+			return accessibleRooms.Contains (r);
+
+		}
+
+		public void MakeAccessTo(Room room){
+
+			accessibleRooms.Add (room);
+
+		}
+
+		public static void MakeAccessBetween(Room a, Room b){
+
+			if (a.IsAccessibleFromSpawn ()) {
+
+				b.SetAccesibleFromSpawn ();
+
+			} else if (b.IsAccessibleFromSpawn ()) {
+
+				a.SetAccesibleFromSpawn ();
+
+			}
+
+			a.MakeAccessTo (b);
+			b.MakeAccessTo (a);
+
 		}
 
 		public Vector3 getPosition() {
