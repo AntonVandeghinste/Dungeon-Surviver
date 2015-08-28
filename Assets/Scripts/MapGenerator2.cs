@@ -2,7 +2,6 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Dungeon;
 
 public class MapGenerator2 : MonoBehaviour
 {
@@ -10,8 +9,8 @@ public class MapGenerator2 : MonoBehaviour
 	public int roomSize = 1;
 	public int defaultWidth = 2, defaultHeight = 2, defaultDepth = 2;
 
-	int fillPercent = 12;
-	int width, height, depth;//respectively x,z,y
+	int fillPercent = 65;
+	static int width, height, depth;//respectively x,z,y
 	string seed;
 	float spacing = 1.10f;
 	List<Room> addedRooms = new List<Room> ();
@@ -50,14 +49,35 @@ public class MapGenerator2 : MonoBehaviour
 		//we are initialized so generate the map:
 		RandomFillMap ();
 
+		int i = 0;
+		while (rooms.Count < 2 && i < 5) {
+
+			rooms.Clear ();
+			RandomFillMap ();
+			i++;
+
+		}
+
+		if (rooms.Count < 2) {
+
+			Debug.Log ("Could not initialize map");
+			Destroy(GameManager.instance.gameObject);
+
+		}
+
 		//set a spawnroom:
 		int spawn = UnityEngine.Random.Range (0, rooms.Count);
-		rooms [spawn].setType (Dungeon.Type.SPAWN);
+		rooms [spawn].setType (Type.SPAWN);
 		rooms [spawn].SetAccesibleFromSpawn ();
 
 		//we have a filled map and list with Room objects, now we make it so that there's no 'unreachable' rooms:
 		MakeRoomsAccesible ();
 
+		//Now that our rooms are all accessible from any other room(be it through other rooms or not)
+		//we can start to generate a simple maze-like connection between the rooms using recursive backtracking in PathGenerator
+		//The odd thing here is we do not define an exit yet, we will define the exit later with the requirement to be a dead end.
+		//Also we'll add some keys and locks if the exit room is for instance right next to the spawn room, but what are the chances right? ...right...
+		PathGenerator.GeneratePath (map, rooms);
 
 	}
 
@@ -194,7 +214,7 @@ public class MapGenerator2 : MonoBehaviour
 
 	void AddRoomsToMakeAccessible(Room a, Room b) {
 
-		Debug.DrawLine (new Vector3 (((-width / 2f + a.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + a.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + a.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), new Vector3 (((-width / 2f + b.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + b.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + b.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), Color.green, 120);
+		//Debug.DrawLine (new Vector3 (((-width / 2f + a.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + a.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + a.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), new Vector3 (((-width / 2f + b.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + b.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + b.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f), Color.green, 120);
 
 		List<Vector3> line = GetLineByVoxelTraversal (a.getPosition (), b.getPosition ());
 
@@ -213,128 +233,6 @@ public class MapGenerator2 : MonoBehaviour
 		Room.MakeAccessBetween (lastRoom, b);
 
 		updateRoomlist = true;
-
-	}
-
-	List<Vector3> GetLine(Vector3 from, Vector3 to) {
-
-		List<Vector3> line = new List<Vector3> ();
-
-		int x, y, z, dx, dy, dz, l, m, n, x_inc, y_inc, z_inc, err_1, err_2, dx2, dy2, dz2;
-
-		x = (int)from.x;
-		y = (int)from.y;
-		z = (int)from.z;
-
-		dx = (int)to.x - (int)from.x;
-		dy = (int)to.y - (int)from.y;
-		dz = (int)to.z - (int)from.z;
-
-		x_inc = Math.Sign (dx);
-		y_inc = Math.Sign (dy);
-		z_inc = Math.Sign (dz);
-
-		l = Math.Abs (dx);
-		m = Math.Abs (dy);
-		n = Math.Abs (dz);
-
-		dx2 = l << 1;
-		dy2 = m << 1;
-		dz2 = n << 1;
-
-		if (l >= m && l >= n) {
-
-			err_1 = dy2 - l;
-			err_2 = dz2 - l;
-			for (int i = 0; i < l; i++) {
-
-				if (i > 0)
-					line.Add (new Vector3 (x, y, z));
-
-				if (err_1 > 0) {
-
-					y += y_inc;
-					err_1 -= dx2;
-
-				}
-
-				if (err_2 > 0) {
-					
-					z += z_inc;
-					err_2 -= dx2;
-					
-				}
-
-				err_1 += dy2;
-				err_2 += dz2;
-
-				x += x_inc;
-
-			}
-
-		} else if (m >= l && m >= n) {
-
-			err_1 = dx2 - m;
-			err_2 = dz2 - m;
-			for (int i = 0; i < m; i++) {
-				
-				if (i > 0)
-					line.Add (new Vector3 (x, y, z));
-				
-				if (err_1 > 0) {
-					
-					x += x_inc;
-					err_1 -= dy2;
-					
-				}
-				
-				if (err_2 > 0) {
-					
-					z += z_inc;
-					err_2 -= dy2;
-					
-				}
-				
-				err_1 += dx2;
-				err_2 += dz2;
-				
-				y += y_inc;
-				
-			}
-
-		} else {
-
-			err_1 = dy2 - n;
-			err_2 = dz2 - n;
-			for (int i = 0; i < l; i++) {
-				
-				if (i > 0)
-					line.Add (new Vector3 (x, y, z));
-				
-				if (err_1 > 0) {
-					
-					y += y_inc;
-					err_1 -= dz2;
-					
-				}
-				
-				if (err_2 > 0) {
-					
-					x += x_inc;
-					err_2 -= dz2;
-					
-				}
-				
-				err_1 += dy2;
-				err_2 += dx2;
-				
-				z += z_inc;
-				
-			}
-
-		}
-
-		return line;
 
 	}
 
@@ -414,84 +312,7 @@ public class MapGenerator2 : MonoBehaviour
 
 	}
 
-	/*List<List<Room>> GetInterConnectedRooms () {
-
-		List<List<Room>> interConnectedRooms = new List<List<Room>> ();
-		Flags[,,] mapFlags = new Flags[width, depth, height];
-
-		for (int x = 0; x < width; x++) {
-			
-			for (int y = 0; y < depth; y++) {
-				
-				for (int z = 0; z < height; z++) {
-
-					if(mapFlags[x, y, z] != Flags.Done && rooms.Contains (map[x, y, z])) {
-
-						List<Room> connectedRooms = GetRoomsInConnection(x, y, z);
-						interConnectedRooms.Add (connectedRooms);
-
-						foreach (Room room in connectedRooms) {
-
-							mapFlags[(int)room.getPosition().x, (int)room.getPosition().y, (int)room.getPosition().z] = Flags.Done;
-
-						}
-
-					}
-
-				}
-
-			}
-
-		}
-
-		return interConnectedRooms;
-
-	}
-
-	List<Room> GetRoomsInConnection (int x, int y, int z) {
-
-		List<Room> roomsList = new List<Room> ();
-		Flags[,,] mapFlags = new Flags[width, depth, height];
-
-		Queue<Room> queue = new Queue<Room> ();
-		queue.Enqueue (map [x, y, z]);
-		mapFlags [x, y, z] = Flags.Done;
-
-		while (queue.Count > 0) {
-
-			Room room = queue.Dequeue ();
-			roomsList.Add (room);
-
-			for (int nX = (int)room.getPosition ().x; nX <= room.getPosition ().x + 1; nX++) {
-				
-				for (int nY = (int)room.getPosition ().y; nY <= room.getPosition ().y + 1; nY++) {
-					
-					for (int nZ = (int)room.getPosition ().z; nZ <= room.getPosition ().z + 1; nZ++) {
-
-						if (IsInMapRange(nX, nY, nZ) && (nX == (int)room.getPosition ().x || nY == (int)room.getPosition ().y || nZ == (int)room.getPosition ().z)){
-
-							if (mapFlags[nX, nY, nZ] != Flags.Done && rooms.Contains (map[nX, nY, nZ])) {
-
-								mapFlags[nX, nY, nZ] = Flags.Done;
-								queue.Enqueue (map[nX, nY, nZ]);
-
-							}
-
-						}
-
-					}
-
-				}
-	
-			}
-		
-		}
-
-		return roomsList;
-
-	}*/
-
-	bool IsInMapRange (int x, int y, int z) {
+	public static bool IsInMapRange (int x, int y, int z) {
 								
 		return x >= 0 && x < width && y >= 0 && y < depth && z >= 0 && z < height;
 
@@ -510,9 +331,18 @@ public class MapGenerator2 : MonoBehaviour
 						if (map [x, y, z] != null) {
 
 							Vector3 pos = new Vector3 (((-width / 2f + x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + z) * roomSize * spacing) + roomSize * spacing / 2f);
-							if(map[x, y, z].TypeOf(Dungeon.Type.SPAWN))
+							if(map[x, y, z].TypeOf(Type.SPAWN))
 								Gizmos.color = Color.white;
-							Gizmos.DrawCube (pos, new Vector3 (roomSize, roomSize, roomSize));
+							else
+								Gizmos.color = Color.gray;
+							Gizmos.DrawCube (pos, new Vector3 (.1f, .1f, .1f));
+							List<Room> connections = map[x, y, z].ConnectedRooms();
+							foreach(Room r in connections){
+
+								Vector3 pos2 = new Vector3 (((-width / 2f + r.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + r.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + r.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f);
+								Gizmos.DrawLine (pos, pos2);
+
+							}
 
 						}
 
@@ -527,4 +357,3 @@ public class MapGenerator2 : MonoBehaviour
 	}
 	
 }
-

@@ -12,172 +12,187 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Dungeon
-{
-	class Room{
+public class Room{
 
-		static float roomSize;
-		static float drawSpace;
+	static float roomSize;
+	static float drawSpace;
 
-		Vector3 position;
-		List<Room> connectedRooms = new List<Room> ();
-		List<Room> accessibleRooms = new List<Room> ();
-		bool isAccesibleFromSpawn = false;
-		Type type;
+	Vector3 position;
+	List<Room> connectedRooms = new List<Room> ();
+	List<Room> accessibleRooms = new List<Room> ();
+	bool isAccesibleFromSpawn = false;
+	Type type;
 
-		public Room(){
-		}
+	public Room(){
+	}
 
-		public Room(Vector3 pos){
+	public Room(Vector3 pos){
 
-			position = pos;
+		position = pos;
 
-		}
+	}
 
-		public Room(Vector3 pos, Type type) {
+	public Room(Vector3 pos, Type type) {
 
-			position = pos;
-			this.type = type;
+		position = pos;
+		this.type = type;
 
-		}
+	}
 
-		public static void setRoomSize(float size){
+	public static void setRoomSize(float size){
 
-			roomSize = size;
+		roomSize = size;
 
-		}
+	}
 
-		public static void setDrawSpace(float space){
+	public static void setDrawSpace(float space){
 
-			drawSpace = space;
+		drawSpace = space;
 
-		}
+	}
 
-		public void setType(Type type){
+	public void setType(Type type){
 
-			this.type = type;
+		this.type = type;
 
-		}
+	}
 
-		public void SetAccesibleFromSpawn () {
+	public void SetAccesibleFromSpawn () {
+		
+		if (!isAccesibleFromSpawn) {
 			
-			if (!isAccesibleFromSpawn) {
+			isAccesibleFromSpawn = true;
+			foreach (Room accessibleRoom in accessibleRooms) {
 				
-				isAccesibleFromSpawn = true;
-				foreach (Room accessibleRoom in accessibleRooms) {
-					
-					accessibleRoom.SetAccesibleFromSpawn();
-					
-				}
+				accessibleRoom.SetAccesibleFromSpawn();
 				
 			}
 			
-		}
-
-		public List<Room> AccessibleRooms(){
-
-			return accessibleRooms;
-
-		}
-
-		public bool IsAccessibleFromSpawn(){
-
-			return isAccesibleFromSpawn;
-
-		}
-
-		public bool HasAccessTo(Room r){
-
-			return accessibleRooms.Contains (r);
-
-		}
-
-		public void MakeAccessTo(Room room){
-
-			accessibleRooms.Add (room);
-
-		}
-
-		public static void MakeAccessBetween(Room a, Room b){
-
-			if (a.IsAccessibleFromSpawn ()) {
-
-				b.SetAccesibleFromSpawn ();
-
-			} else if (b.IsAccessibleFromSpawn ()) {
-
-				a.SetAccesibleFromSpawn ();
-
-			}
-
-			a.MakeAccessTo (b);
-			b.MakeAccessTo (a);
-
-		}
-
-		public Vector3 getPosition() {
-
-			return position;
-
-		}
-
-		public Boolean TypeOf(Type t){
-
-			return type == t;
-
-		}
-
-		public override string ToString ()
-		{
-
-			return "Room at position: " + position.ToString ();
-
 		}
 		
 	}
 
-	public class Type
+	public List<Room> AccessibleRooms(){
+
+		return accessibleRooms;
+
+	}
+
+	public List<Room> ConnectedRooms(){
+
+		return connectedRooms;
+
+	}
+
+	public bool IsAccessibleFromSpawn(){
+
+		return isAccesibleFromSpawn;
+
+	}
+
+	public bool HasAccessTo(Room r){
+
+		return accessibleRooms.Contains (r);
+
+	}
+
+	public void MakeAccessTo(Room room){
+
+		accessibleRooms.Add (room);
+
+	}
+
+	public static void MakeAccessBetween(Room a, Room b){
+
+		if (a.IsAccessibleFromSpawn ()) {
+
+			b.SetAccesibleFromSpawn ();
+
+		} else if (b.IsAccessibleFromSpawn ()) {
+
+			a.SetAccesibleFromSpawn ();
+
+		}
+
+		a.MakeAccessTo (b);
+		b.MakeAccessTo (a);
+
+	}
+
+	public void Connect(Room r) {
+
+		connectedRooms.Add (r);
+
+	}
+
+	public static void ConnectRooms(Room a, Room b){
+
+		a.Connect (b);
+		b.Connect (a);
+
+	}
+
+	public Vector3 getPosition() {
+
+		return position;
+
+	}
+
+	public Boolean TypeOf(Type t){
+
+		return type == t;
+
+	}
+
+	public override string ToString ()
 	{
 
-		public static readonly Type SPAWN = new Type ("Spawn");
-		public static readonly Type DEFAULT = new Type ("Default");
-		public static readonly Type ENEMY = new Type ("Enemy");
-		public static readonly Type PUZZLE = new Type ("Puzzle");
-		public static readonly Type DEBUG = new Type ("Debug");
+		return "Room at position: " + position.ToString ();
 
-		public static IEnumerable<Type> Values
+	}
+	
+}
+
+public class Type
+{
+
+	public static readonly Type SPAWN = new Type ("Spawn");
+	public static readonly Type DEFAULT = new Type ("Default");
+	public static readonly Type ENEMY = new Type ("Enemy");
+	public static readonly Type PUZZLE = new Type ("Puzzle");
+	public static readonly Type DEBUG = new Type ("Debug");
+
+	public static IEnumerable<Type> Values
+	{
+
+		get
 		{
 
-			get
-			{
-
-				yield return SPAWN;
-				yield return ENEMY;
-				yield return PUZZLE;
-				yield return DEBUG;
-
-			}
-
-		}
-
-		private readonly string name;
-
-		Type(string name)
-		{
-
-			this.name = name;
-
-		}
-
-		public string Name { get { return name; } }
-
-		public override string ToString ()
-		{
-
-			return "Type::" + name;
+			yield return SPAWN;
+			yield return ENEMY;
+			yield return PUZZLE;
+			yield return DEBUG;
 
 		}
 
 	}
-}
 
+	private readonly string name;
+
+	Type(string name)
+	{
+
+		this.name = name;
+
+	}
+
+	public string Name { get { return name; } }
+
+	public override string ToString ()
+	{
+
+		return "Type::" + name;
+
+	}
+
+}
