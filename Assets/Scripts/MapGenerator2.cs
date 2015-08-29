@@ -47,23 +47,15 @@ public class MapGenerator2 : MonoBehaviour
 		map = new Room[width, depth, height];
 
 		//we are initialized so generate the map:
-		RandomFillMap ();
-
 		int i = 0;
-		while (rooms.Count < 2 && i < 5) {
+		while (!RandomFillMap ()) {
 
-			rooms.Clear ();
-			RandomFillMap ();
+			if(i >= 5)
+				throw new ApplicationException("Could not find a map after 5 tries");
 			i++;
 
 		}
 
-		if (rooms.Count < 2) {
-
-			Debug.Log ("Could not initialize map");
-			Destroy(GameManager.instance.gameObject);
-
-		}
 
 		//set a spawnroom:
 		int spawn = UnityEngine.Random.Range (0, rooms.Count);
@@ -81,7 +73,7 @@ public class MapGenerator2 : MonoBehaviour
 
 	}
 
-	void RandomFillMap ()
+	bool RandomFillMap ()
 	{
 
 		System.Random randomHash = new System.Random (seed.GetHashCode ());
@@ -106,6 +98,12 @@ public class MapGenerator2 : MonoBehaviour
 			}
 
 		}
+
+		if (rooms.Count < 2) {
+			rooms.Clear ();
+			return false;
+		}
+		return true;
 
 	}
 

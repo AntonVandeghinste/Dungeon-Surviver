@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public class GameManager : MonoBehaviour {
 
@@ -30,7 +31,17 @@ public class GameManager : MonoBehaviour {
 
 		doingSetup = true;
 
-		mapGen.SetupScene (level);
+		try{
+
+			mapGen.SetupScene (level);
+
+		}catch(ApplicationException e){
+
+			Debug.Log (e.Message);
+			Destroy (gameObject);
+			Application.Quit ();
+
+		}
 
 	}
 

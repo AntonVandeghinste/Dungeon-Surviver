@@ -107,6 +107,7 @@ public static class PathGenerator
 
 				Debug.Log ("returning to previous room: " + previous);
 				i--;
+				i = i < 1 ? 0 : i;
 				current = previous[i];
 
 			}
