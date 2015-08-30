@@ -16,19 +16,8 @@ public static class PathGenerator
 
 	public static void GeneratePath(Room[,,] map, List<Room> rooms){
 
-		Room spawn = new Room ();
+		Room spawn = DungeonHelper.Spawn;
 		int N = 1, S = 2, E = 4, W = 8, U = 16, D = 32;
-
-		foreach (Room room in rooms) {
-
-			if(room.TypeOf(Type.SPAWN)){
-
-				spawn = room;
-				break;
-
-			}
-
-		}
 
 		List<int> directions = new List<int> ();
 		directions.Add (N);
@@ -84,7 +73,7 @@ public static class PathGenerator
 
 			foreach(int direction in directions){
 
-				if(!MapGenerator2.IsInMapRange ((int) current.getPosition ().x + DX[direction], (int) current.getPosition ().y + DY[direction], (int) current.getPosition ().z + DZ[direction]))
+				if(!DungeonHelper.IsInMapRange ((int) current.getPosition ().x + DX[direction], (int) current.getPosition ().y + DY[direction], (int) current.getPosition ().z + DZ[direction]))
 					continue;
 				Room next = map[(int) current.getPosition ().x + DX[direction], (int) current.getPosition ().y + DY[direction], (int) current.getPosition ().z + DZ[direction]];
 				//Debug.Log ("trying: " + next);

@@ -185,48 +185,10 @@ public class Room{
 	public override string ToString ()
 	{
 
-		return "Room at position: " + position.ToString ();
+		return "Room at position: " + position.ToString () + "\n" + type.ToString();
 
 	}
 	
-}
-
-public class PuzzleRoom : Room {
-
-
-
-}
-
-public class EnemyRoom : Room {
-
-	public EnemyRoom(Vector3 pos, Type type) : base(pos, type) {
-
-	}
-
-}
-
-public class BossRoom : EnemyRoom {
-
-	public BossRoom(Vector3 pos, Type type) : base(pos, type){
-
-	}
-
-}
-
-public class ExitRoom : BossRoom {
-
-	int requiredKeys = 0;
-
-	public ExitRoom(Vector3 pos) : base(pos, Type.EXIT){
-
-	}
-
-	public void SetRequiredKeys(int keys) {
-
-		this.requiredKeys = keys;
-
-	}
-
 }
 
 public class Type
@@ -238,6 +200,7 @@ public class Type
 	public static readonly Type PUZZLE = new Type ("Puzzle");
 	public static readonly Type DEBUG = new Type ("Debug");
 	public static readonly Type EXIT = new Type ("Exit");
+	public readonly Type BOSS;
 
 	public static IEnumerable<Type> Values
 	{
@@ -250,17 +213,32 @@ public class Type
 			yield return ENEMY;
 			yield return PUZZLE;
 			yield return DEBUG;
+			yield return EXIT;
 
 		}
 
 	}
 
 	private readonly string name;
+	private readonly Type super;
 
 	Type(string name)
 	{
 
 		this.name = name;
+		this.super = Type.DEFAULT;
+		if (name == "Enemy") {
+
+			this.BOSS = new Type("Boss", this);
+
+		}
+
+	}
+
+	Type (string name, Type super){
+
+		this.name = name;
+		this.super = super;
 
 	}
 

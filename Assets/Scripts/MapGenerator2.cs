@@ -6,22 +6,10 @@ using System.Collections.Generic;
 public class MapGenerator2 : MonoBehaviour
 {
 
-	public int roomSize = 1;
-	public int defaultWidth = 2, defaultHeight = 2, defaultDepth = 2;
-
 	int fillPercent = 65;
-	static int width, height, depth;//respectively x,z,y
 	string seed;
-	float spacing = 1.10f;
 	List<Room> addedRooms = new List<Room> ();
 	bool updateRoomlist;
-	Room exit;
-
-	Room[,,] map;
-	//This is for simple coordinate wise accessibilty(coordinate 0,0,0 namely the first block will have a real coordinate of -somewhat,y,z etc...)
-
-	List<Room> rooms = new List<Room>();
-	//This is the actual list of rooms
 
 	void Update ()
 	{
@@ -34,18 +22,19 @@ public class MapGenerator2 : MonoBehaviour
 	public void SetupScene (int level)
 	{
 
-		rooms.Clear ();//make sure we start with nothing
+		DungeonHelper.rooms.Clear ();//make sure we start with nothing
+		DungeonHelper.deadEnds.Clear ();
 
-		width = defaultWidth + (int)Mathf.Log (level, 2f);
-		height = defaultHeight + (int)Mathf.Log (level, 2f);
-		depth = defaultDepth + (int)Mathf.Log (level, 2f);
+		DungeonHelper.width = DungeonHelper.defaultWidth + (int)Mathf.Log (level, 2.5f);
+		DungeonHelper.height = DungeonHelper.defaultHeight + (int)Mathf.Log (level, 2.5f);
+		DungeonHelper.depth = DungeonHelper.defaultDepth + (int)Mathf.Log (level, 2.5f);
 
-		Room.setRoomSize (roomSize);
-		Room.setDrawSpace (roomSize * spacing);
+		Room.setRoomSize (DungeonHelper.roomSize);
+		Room.setDrawSpace (DungeonHelper.roomSize * DungeonHelper.spacing);
 
 		seed = System.DateTime.Now.ToString ();
 
-		map = new Room[width, depth, height];
+		DungeonHelper.map = new Room[DungeonHelper.width, DungeonHelper.depth, DungeonHelper.height];
 
 		//we are initialized so generate the map:
 		int i = 0;
@@ -59,9 +48,10 @@ public class MapGenerator2 : MonoBehaviour
 
 
 		//set a spawnroom:
-		int spawn = UnityEngine.Random.Range (0, rooms.Count);
-		rooms [spawn].setType (Type.SPAWN);
-		rooms [spawn].SetAccesibleFromSpawn ();
+		int spawn = UnityEngine.Random.Range (0, DungeonHelper.rooms.Count);
+		DungeonHelper.rooms [spawn].setType (Type.SPAWN);
+		DungeonHelper.rooms [spawn].SetAccesibleFromSpawn ();
+		DungeonHelper.Spawn = DungeonHelper.rooms [spawn];
 
 		//we have a filled map and list with Room objects, now we make it so that there's no 'unreachable' rooms:
 		MakeRoomsAccesible ();
@@ -70,13 +60,20 @@ public class MapGenerator2 : MonoBehaviour
 		//we can start to generate a simple maze-like connection between the rooms using recursive backtracking in PathGenerator
 		//The odd thing here is we do not define an exit yet, we will define the exit later with the requirement to be a dead end.
 		//Also we'll add some keys and locks if the exit room is for instance right next to the spawn room, but what are the chances right? ...right...
-		PathGenerator.GeneratePath (map, rooms);
+		PathGenerator.GeneratePath (DungeonHelper.map, DungeonHelper.rooms);
 
 		//We have a maze with a path, now we choose an exit room
-		exit = AssignExitRoom ();
+		DungeonHelper.AssignExitRoom ();
 
 		//Exit room exists, almost done with the calculations, let's make it somewhat harder for the user to reach the exit room
-		CalculateRequiredKeys ();
+		DungeonHelper.CalculateRequiredKeys ();
+
+		//let's add the right monsters and puzzles to the rooms shall we?
+		DungeonHelper.AddGamePlay ();
+
+		Debug.Log (DungeonHelper.rooms.Count);
+		DungeonHelper.rooms.ForEach (item => Debug.Log (item));
+		Debug.Log ("Required keys: " + DungeonHelper.RequiredKeys);
 
 	}
 
@@ -85,18 +82,18 @@ public class MapGenerator2 : MonoBehaviour
 
 		System.Random randomHash = new System.Random (seed.GetHashCode ());
 
-		for (int x = 0; x < width; x++) {
+		for (int x = 0; x < DungeonHelper.width; x++) {
 
-			for (int y = 0; y < depth; y++) {
+			for (int y = 0; y < DungeonHelper.depth; y++) {
 
-				for (int z = 0; z < height; z++) {
+				for (int z = 0; z < DungeonHelper.height; z++) {
 
 					Vector3 pos = new Vector3(x, y, z);
-					map[x, y, z] = (randomHash.Next (0, 100) < fillPercent) ? new Room (pos) : null;
+					DungeonHelper.map[x, y, z] = (randomHash.Next (0, 100) < fillPercent) ? new Room (pos) : null;
 
-					if (map[x, y, z] != null) {
+					if (DungeonHelper.map[x, y, z] != null) {
 
-						rooms.Add (map[x, y, z]);
+						DungeonHelper.rooms.Add (DungeonHelper.map[x, y, z]);
 
 					}
 
@@ -106,8 +103,8 @@ public class MapGenerator2 : MonoBehaviour
 
 		}
 
-		if (rooms.Count < 2) {
-			rooms.Clear ();
+		if (DungeonHelper.rooms.Count < 2) {
+			DungeonHelper.rooms.Clear ();
 			return false;
 		}
 		return true;
@@ -130,7 +127,7 @@ public class MapGenerator2 : MonoBehaviour
 
 		if (forceAcces) {
 
-			foreach (Room room in rooms) {
+			foreach (Room room in DungeonHelper.rooms) {
 
 				if (room.IsAccessibleFromSpawn ()) {
 
@@ -146,8 +143,8 @@ public class MapGenerator2 : MonoBehaviour
 
 		} else {
 
-			roomsListA = rooms;
-			roomsListB = rooms;
+			roomsListA = DungeonHelper.rooms;
+			roomsListB = DungeonHelper.rooms;
 
 		}
 
@@ -211,7 +208,7 @@ public class MapGenerator2 : MonoBehaviour
 
 		foreach (Room room in addedRooms) {
 
-			rooms.Add (room);
+			DungeonHelper.rooms.Add (room);
 
 		}
 
@@ -226,12 +223,12 @@ public class MapGenerator2 : MonoBehaviour
 		Room lastRoom = a;
 		foreach (Vector3 point in line) {
 
-			map[(int)point.x, (int)point.y, (int)point.z] = new Room(point);
+			DungeonHelper.map[(int)point.x, (int)point.y, (int)point.z] = new Room(point);
 			//map[(int)point.x, (int)point.y, (int)point.z].setType(Dungeon.Type.DEBUG);
-			Room.MakeAccessBetween (map[(int)point.x, (int)point.y, (int)point.z], lastRoom);
-			addedRooms.Add (map[(int)point.x, (int)point.y, (int)point.z]);
+			Room.MakeAccessBetween (DungeonHelper.map[(int)point.x, (int)point.y, (int)point.z], lastRoom);
+			addedRooms.Add (DungeonHelper.map[(int)point.x, (int)point.y, (int)point.z]);
 			//Debug.Log (point.ToString ());
-			lastRoom = map[(int)point.x, (int)point.y, (int)point.z];
+			lastRoom = DungeonHelper.map[(int)point.x, (int)point.y, (int)point.z];
 
 		}
 
@@ -275,7 +272,7 @@ public class MapGenerator2 : MonoBehaviour
 
 		while (--n >= 0) {
 
-			if(map[x, y, z] == null) {
+			if(DungeonHelper.map[x, y, z] == null) {
 
 				line.Add (new Vector3(x, y, z));
 
@@ -315,87 +312,33 @@ public class MapGenerator2 : MonoBehaviour
 
 		return line;
 
-	}
-
-	Room AssignExitRoom() {
-
-		List<Room> deadEnds = new List<Room> ();
-
-		foreach (Room r in rooms) {
-
-			if(r.ConnectedRooms().Count < 2  && !r.TypeOf (Type.SPAWN)){
-
-				r.SetDeadEnd();
-				deadEnds.Add (r);
-
-			}
-
-		}
-
-		int exit = UnityEngine.Random.Range (0, deadEnds.Count);
-		Room old = rooms [rooms.IndexOf (deadEnds [exit])];
-		Room n = new ExitRoom (old.getPosition ());
-		Room connection = old.ConnectedRooms ()[0];
-		old.DisconnectRooms ();
-		Room.ConnectRooms (n, connection);
-		int index = rooms.IndexOf (old);
-		rooms [index] = n;
-		map [(int)old.getPosition ().x, (int)old.getPosition ().y, (int)old.getPosition ().z] = n;
-
-		return n;
-
-	}
-
-	void CalculateRequiredKeys(){
-
-		int requiredKeys = 0;
-		foreach (Room r in rooms) {
-			
-			if(r.IsDeadEnd()){
-
-				requiredKeys++;
-				
-			}
-			
-		}
-
-		requiredKeys += UnityEngine.Random.Range (0, rooms.Count - (2 + requiredKeys));
-		requiredKeys += (int) Math.Log (GameManager.instance.level);
-
-		((ExitRoom)exit).SetRequiredKeys (requiredKeys);
-
-	}
-
-	public static bool IsInMapRange (int x, int y, int z) {
-								
-		return x >= 0 && x < width && y >= 0 && y < depth && z >= 0 && z < height;
-
 	}													                                                                
 
 	void OnDrawGizmos () {
-		
-		if (map != null) {
-			
-			for (int x = 0; x < width; x++) {
+
+		if (DungeonHelper.map != null) {
+
+			for (int x = 0; x < DungeonHelper.width; x++) {
 				
-				for (int y = 0; y < depth; y++) {
+				for (int y = 0; y < DungeonHelper.depth; y++) {
 					
-					for (int z = 0; z < height; z++) {
+					for (int z = 0; z < DungeonHelper.height; z++) {
 
-						if (map [x, y, z] != null) {
+						if (DungeonHelper.map [x, y, z] != null) {
 
-							Vector3 pos = new Vector3 (((-width / 2f + x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + z) * roomSize * spacing) + roomSize * spacing / 2f);
-							if(map[x, y, z].TypeOf(Type.SPAWN))
+							Vector3 pos = new Vector3 (((-DungeonHelper.width / 2f + x) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.depth / 2f + y) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.height / 2f + z) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f);
+							if(DungeonHelper.map[x, y, z] == DungeonHelper.Spawn)
 								Gizmos.color = Color.white;
-							else if(map[x, y, z].TypeOf(Type.EXIT))
+							else if(DungeonHelper.map[x, y, z] == DungeonHelper.Exit)
 								Gizmos.color = Color.blue;
 							else
 								Gizmos.color = Color.gray;
 							Gizmos.DrawCube (pos, new Vector3 (.1f, .1f, .1f));
-							List<Room> connections = map[x, y, z].ConnectedRooms();
+							Gizmos.color = Color.gray;
+							List<Room> connections = DungeonHelper.map[x, y, z].ConnectedRooms();
 							foreach(Room r in connections){
 
-								Vector3 pos2 = new Vector3 (((-width / 2f + r.getPosition ().x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + r.getPosition ().y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + r.getPosition ().z) * roomSize * spacing) + roomSize * spacing / 2f);
+								Vector3 pos2 = new Vector3 (((-DungeonHelper.width / 2f + r.getPosition ().x) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.depth / 2f + r.getPosition ().y) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.height / 2f + r.getPosition ().z) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f);
 								Gizmos.DrawLine (pos, pos2);
 
 							}
