@@ -15,6 +15,7 @@ public class MapGenerator2 : MonoBehaviour
 	float spacing = 1.10f;
 	List<Room> addedRooms = new List<Room> ();
 	bool updateRoomlist;
+	Room exit;
 
 	Room[,,] map;
 	//This is for simple coordinate wise accessibilty(coordinate 0,0,0 namely the first block will have a real coordinate of -somewhat,y,z etc...)
@@ -70,6 +71,12 @@ public class MapGenerator2 : MonoBehaviour
 		//The odd thing here is we do not define an exit yet, we will define the exit later with the requirement to be a dead end.
 		//Also we'll add some keys and locks if the exit room is for instance right next to the spawn room, but what are the chances right? ...right...
 		PathGenerator.GeneratePath (map, rooms);
+
+		//We have a maze with a path, now we choose an exit room
+		exit = AssignExitRoom ();
+
+		//Exit room exists, almost done with the calculations, let's make it somewhat harder for the user to reach the exit room
+		CalculateRequiredKeys ();
 
 	}
 
@@ -223,7 +230,7 @@ public class MapGenerator2 : MonoBehaviour
 			//map[(int)point.x, (int)point.y, (int)point.z].setType(Dungeon.Type.DEBUG);
 			Room.MakeAccessBetween (map[(int)point.x, (int)point.y, (int)point.z], lastRoom);
 			addedRooms.Add (map[(int)point.x, (int)point.y, (int)point.z]);
-			Debug.Log (point.ToString ());
+			//Debug.Log (point.ToString ());
 			lastRoom = map[(int)point.x, (int)point.y, (int)point.z];
 
 		}
@@ -310,6 +317,55 @@ public class MapGenerator2 : MonoBehaviour
 
 	}
 
+	Room AssignExitRoom() {
+
+		List<Room> deadEnds = new List<Room> ();
+
+		foreach (Room r in rooms) {
+
+			if(r.ConnectedRooms().Count < 2  && !r.TypeOf (Type.SPAWN)){
+
+				r.SetDeadEnd();
+				deadEnds.Add (r);
+
+			}
+
+		}
+
+		int exit = UnityEngine.Random.Range (0, deadEnds.Count);
+		Room old = rooms [rooms.IndexOf (deadEnds [exit])];
+		Room n = new ExitRoom (old.getPosition ());
+		Room connection = old.ConnectedRooms ()[0];
+		old.DisconnectRooms ();
+		Room.ConnectRooms (n, connection);
+		int index = rooms.IndexOf (old);
+		rooms [index] = n;
+		map [(int)old.getPosition ().x, (int)old.getPosition ().y, (int)old.getPosition ().z] = n;
+
+		return n;
+
+	}
+
+	void CalculateRequiredKeys(){
+
+		int requiredKeys = 0;
+		foreach (Room r in rooms) {
+			
+			if(r.IsDeadEnd()){
+
+				requiredKeys++;
+				
+			}
+			
+		}
+
+		requiredKeys += UnityEngine.Random.Range (0, rooms.Count - (2 + requiredKeys));
+		requiredKeys += (int) Math.Log (GameManager.instance.level);
+
+		((ExitRoom)exit).SetRequiredKeys (requiredKeys);
+
+	}
+
 	public static bool IsInMapRange (int x, int y, int z) {
 								
 		return x >= 0 && x < width && y >= 0 && y < depth && z >= 0 && z < height;
@@ -331,6 +387,8 @@ public class MapGenerator2 : MonoBehaviour
 							Vector3 pos = new Vector3 (((-width / 2f + x) * roomSize * spacing) + roomSize * spacing / 2f, ((-depth / 2f + y) * roomSize * spacing) + roomSize * spacing / 2f, ((-height / 2f + z) * roomSize * spacing) + roomSize * spacing / 2f);
 							if(map[x, y, z].TypeOf(Type.SPAWN))
 								Gizmos.color = Color.white;
+							else if(map[x, y, z].TypeOf(Type.EXIT))
+								Gizmos.color = Color.blue;
 							else
 								Gizmos.color = Color.gray;
 							Gizmos.DrawCube (pos, new Vector3 (.1f, .1f, .1f));

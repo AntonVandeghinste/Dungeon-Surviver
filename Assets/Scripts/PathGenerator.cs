@@ -80,18 +80,18 @@ public static class PathGenerator
 			directions.Shuffle ();
 			if(!processed.Contains(current))
 				processed.Add (current);
-			Debug.Log ("started");
+			//Debug.Log ("started");
 
 			foreach(int direction in directions){
 
 				if(!MapGenerator2.IsInMapRange ((int) current.getPosition ().x + DX[direction], (int) current.getPosition ().y + DY[direction], (int) current.getPosition ().z + DZ[direction]))
 					continue;
 				Room next = map[(int) current.getPosition ().x + DX[direction], (int) current.getPosition ().y + DY[direction], (int) current.getPosition ().z + DZ[direction]];
-				Debug.Log ("trying: " + next);
+				//Debug.Log ("trying: " + next);
 
 				if(next != null && !processed.Contains(next)){
 
-					Debug.Log ("Making connection between " + current + " and " + next);
+					//Debug.Log ("Making connection between " + current + " and " + next);
 					Room.ConnectRooms(current, next);
 					previous[i] = current;
 					current = next;
@@ -105,7 +105,7 @@ public static class PathGenerator
 
 			if(!connected){
 
-				Debug.Log ("returning to previous room: " + previous);
+				//Debug.Log ("returning to previous room: " + previous);
 				i--;
 				i = i < 1 ? 0 : i;
 				current = previous[i];

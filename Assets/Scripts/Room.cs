@@ -21,7 +21,8 @@ public class Room{
 	List<Room> connectedRooms = new List<Room> ();
 	List<Room> accessibleRooms = new List<Room> ();
 	bool isAccesibleFromSpawn = false;
-	Type type;
+	Type type = Type.DEFAULT;
+	bool deadEnd = false;
 
 	public Room(){
 	}
@@ -70,6 +71,18 @@ public class Room{
 			
 		}
 		
+	}
+
+	public void SetDeadEnd(){
+
+		deadEnd = true;
+
+	}
+
+	public bool IsDeadEnd() {
+
+		return deadEnd;
+
 	}
 
 	public List<Room> AccessibleRooms(){
@@ -125,10 +138,35 @@ public class Room{
 
 	}
 
+	public void Disconnect(Room r) {
+
+		connectedRooms.Remove (r);
+
+	}
+
 	public static void ConnectRooms(Room a, Room b){
 
 		a.Connect (b);
 		b.Connect (a);
+
+	}
+
+	public static void DisconnectRooms(Room a, Room b) {
+
+		a.Disconnect (b);
+		b.Disconnect (a);
+
+	}
+
+	public void DisconnectRooms() {
+
+		List<Room> temp = connectedRooms;
+		connectedRooms.Clear ();
+		foreach (Room r in temp) {
+
+			r.Disconnect(this);
+
+		}
 
 	}
 
@@ -153,6 +191,44 @@ public class Room{
 	
 }
 
+public class PuzzleRoom : Room {
+
+
+
+}
+
+public class EnemyRoom : Room {
+
+	public EnemyRoom(Vector3 pos, Type type) : base(pos, type) {
+
+	}
+
+}
+
+public class BossRoom : EnemyRoom {
+
+	public BossRoom(Vector3 pos, Type type) : base(pos, type){
+
+	}
+
+}
+
+public class ExitRoom : BossRoom {
+
+	int requiredKeys = 0;
+
+	public ExitRoom(Vector3 pos) : base(pos, Type.EXIT){
+
+	}
+
+	public void SetRequiredKeys(int keys) {
+
+		this.requiredKeys = keys;
+
+	}
+
+}
+
 public class Type
 {
 
@@ -161,6 +237,7 @@ public class Type
 	public static readonly Type ENEMY = new Type ("Enemy");
 	public static readonly Type PUZZLE = new Type ("Puzzle");
 	public static readonly Type DEBUG = new Type ("Debug");
+	public static readonly Type EXIT = new Type ("Exit");
 
 	public static IEnumerable<Type> Values
 	{
@@ -168,6 +245,7 @@ public class Type
 		get
 		{
 
+			yield return DEFAULT;
 			yield return SPAWN;
 			yield return ENEMY;
 			yield return PUZZLE;
