@@ -71,9 +71,9 @@ public class MapGenerator2 : MonoBehaviour
 		//let's add the right monsters and puzzles to the rooms shall we?
 		DungeonHelper.AddGamePlay ();
 
-		Debug.Log (DungeonHelper.rooms.Count);
-		DungeonHelper.rooms.ForEach (item => Debug.Log (item));
-		Debug.Log ("Required keys: " + DungeonHelper.RequiredKeys);
+//		Debug.Log (DungeonHelper.rooms.Count);
+//		DungeonHelper.rooms.ForEach (item => Debug.Log (item));
+//		Debug.Log ("Required keys: " + DungeonHelper.RequiredKeys);
 
 	}
 
@@ -326,19 +326,19 @@ public class MapGenerator2 : MonoBehaviour
 
 						if (DungeonHelper.map [x, y, z] != null) {
 
-							Vector3 pos = new Vector3 (((-DungeonHelper.width / 2f + x) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.depth / 2f + y) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.height / 2f + z) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f);
+							Vector3 pos = new Vector3 (((-DungeonHelper.width / 2f + x) * Room.GetDrawSpace()) + Room.GetDrawSpace() / 2f, ((-DungeonHelper.depth / 2f + y) * Room.GetDrawSpace()) + Room.GetDrawSpace() / 2f, ((-DungeonHelper.height / 2f + z) * Room.GetDrawSpace()) + Room.GetDrawSpace() / 2f);
 							if(DungeonHelper.map[x, y, z] == DungeonHelper.Spawn)
 								Gizmos.color = Color.white;
 							else if(DungeonHelper.map[x, y, z] == DungeonHelper.Exit)
 								Gizmos.color = Color.blue;
 							else
 								Gizmos.color = Color.gray;
-							Gizmos.DrawCube (pos, new Vector3 (.1f, .1f, .1f));
+							Gizmos.DrawCube (pos, Room.GetRoomSize());
 							Gizmos.color = Color.gray;
 							List<Room> connections = DungeonHelper.map[x, y, z].ConnectedRooms();
 							foreach(Room r in connections){
 
-								Vector3 pos2 = new Vector3 (((-DungeonHelper.width / 2f + r.getPosition ().x) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.depth / 2f + r.getPosition ().y) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f, ((-DungeonHelper.height / 2f + r.getPosition ().z) * DungeonHelper.roomSize * DungeonHelper.spacing) + DungeonHelper.roomSize * DungeonHelper.spacing / 2f);
+								Vector3 pos2 = new Vector3 (((-DungeonHelper.width / 2f + r.getPosition ().x) * Room.GetDrawSpace()) + Room.GetDrawSpace() / 2f, ((-DungeonHelper.depth / 2f + r.getPosition ().y) * Room.GetDrawSpace()) + Room.GetDrawSpace() / 2f, ((-DungeonHelper.height / 2f + r.getPosition ().z) * Room.GetDrawSpace()) + Room.GetDrawSpace() / 2f);
 								Gizmos.DrawLine (pos, pos2);
 
 							}

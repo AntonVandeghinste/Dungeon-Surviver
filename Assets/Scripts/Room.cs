@@ -42,19 +42,31 @@ public class Room{
 
 	public static void setRoomSize(float size){
 
-		roomSize = size;
+		roomSize = size * 10;
+
+	}
+
+	public static Vector3 GetRoomSize() {
+
+		return new Vector3 (roomSize, roomSize, roomSize);
 
 	}
 
 	public static void setDrawSpace(float space){
 
-		drawSpace = space;
+		drawSpace =  roomSize * space;
 
 	}
 
 	public void setType(Type type){
 
 		this.type = type;
+
+	}
+
+	public static float GetDrawSpace() {
+
+		return drawSpace;
 
 	}
 

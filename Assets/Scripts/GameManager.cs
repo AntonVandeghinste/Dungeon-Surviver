@@ -33,7 +33,7 @@ public class GameManager : MonoBehaviour {
 
 		try{
 
-			mapGen.SetupScene (level);
+			DungeonHelper.Generate (level, mapGen);
 
 		}catch(ApplicationException e){
 

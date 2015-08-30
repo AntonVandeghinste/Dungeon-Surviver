@@ -106,4 +106,10 @@ public static class DungeonHelper
 
 	}
 
+	public static void Generate (int level, MapGenerator2 mapgen) {
+
+		mapgen.SetupScene (level);
+
+	}
+
 }
